@@ -1,0 +1,19 @@
+{
+  "type": "record",
+  "name": "Payload",
+  "namespace": "com.example.demo.avro",
+  "fields": [
+    {
+      "name": "id",
+      "type": "int"
+    },
+    {
+      "name": "payload",
+      "type": [
+        "null",
+        "string"
+      ],
+      "default": null
+    }
+  ]
+}

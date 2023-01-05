@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kstreams-demo
+  annotations:
+    konghq.com/preserve-host: "false"
+spec:
+  ingressClassName: kong
+  rules:
+    - host: kstreams-demo.lab
+      http:
+        paths:
+          - backend:
+              service:
+                name: kstreams-demo
+                port:
+                  number: 8080
+            path: /
+            pathType: Prefix

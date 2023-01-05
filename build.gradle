@@ -1,0 +1,99 @@
+import com.github.davidmc24.gradle.plugin.avro.GenerateAvroJavaTask
+
+plugins {
+    id 'java'
+    id 'idea'
+    id 'org.springframework.boot' version '3.0.1'
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'org.graalvm.buildtools.native' version '0.9.19'
+    id 'com.github.davidmc24.gradle.plugin.avro-base' version '1.5.0'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://packages.confluent.io/maven/"
+    }
+}
+
+def generatedSourcesDir = file('src/generated/main/java')
+idea {
+    module {
+        sourceDirs += generatedSourcesDir
+        generatedSourceDirs += generatedSourcesDir
+    }
+}
+
+dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    implementation 'org.springframework.boot:spring-boot-starter'
+
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.apache.kafka:kafka-streams'
+    implementation group: 'org.apache.avro', name: 'avro', version: '1.11.1'
+    implementation group: 'io.confluent', name: 'kafka-avro-serializer', version: '7.2.2'
+    implementation group: 'io.confluent', name: 'kafka-streams-avro-serde', version: '7.2.2'
+
+    implementation('org.springframework.boot:spring-boot-starter-web') {
+        exclude group: 'org.apache.tomcat.embed', module: 'tomcat-embed-core'
+        exclude group: 'org.apache.tomcat.embed', module: 'tomcat-embed-websocket'
+    }
+    implementation 'org.apache.tomcat.experimental:tomcat-embed-programmatic:10.1.4'
+//	String tomcatVersion = dependencyManagement.importedProperties['tomcat.version']
+//	implementation "org.apache.tomcat.experimental:tomcat-embed-programmatic:$tomcatVersion"
+
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+/*
+Commands for to start podman socket in WSL
+podman system service --time=0 tcp:0.0.0.0:2979
+podman system service --time=0 unix:///run/user/1000/podman/podman.sock
+*/
+tasks.named("bootBuildImage") {
+    imageName = "192.168.0.10:5050/home/${project.name}:${project.version}"
+    environment["BP_JVM_VERSION"] = "17"
+    environment["BP_NATIVE_IMAGE"] = "true"
+    docker {
+//		host = "tcp://127.0.0.1:2979"
+        host = "unix:///run/user/1000/podman/podman.sock"
+        bindHostToBuilder = true
+
+/*		publishRegistry {
+			username = "$repousername"
+			password = "$repopassword"
+			url = "$repourl"
+			email = "$repoemail"
+		}
+		publish = true*/
+    }
+    builder = "192.168.0.10:5050/paketo/builder:latest"
+}
+
+
+def generateAvro = tasks.register("generateAvro", GenerateAvroJavaTask) {
+    source file("src/main/avro")
+    outputDir = file("src/generated/main/java")
+    fieldVisibility = "PRIVATE"
+    enableDecimalLogicalType = true
+}
+
+tasks.named("compileJava").configure {
+    source(generateAvro)
+}
+
+clean {
+    delete "${rootDir}/src/generated/main/java"
+}

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kstreams-demo
+  namespace: kstreams-demo
+spec:
+  selector:
+    matchLabels:
+      app: kstreams-demo
+  template:
+    metadata:
+      labels:
+        app: kstreams-demo
+    spec:
+      containers:
+        - name: kstreams-demo
+
+          env:
+          - name: SPRING_PROFILES_ACTIVE
+            value: test
+          - name: SPRING_CONFIG_ADDITIONAL-LOCATION
+            value: /config/
+          volumeMounts:
+            - name: kstreams-demo-config
+              mountPath: /config
+      volumes:
+      - name: kstreams-demo-config
+        configMap:
+          name: kstreams-demo

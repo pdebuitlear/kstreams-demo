@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kstreams-demo
+  namespace: kstreams-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kstreams-demo
+  template:
+    metadata:
+      labels:
+        app: kstreams-demo
+    spec:
+      containers:
+        - image: home/kstreams-demo:0.0.1-SNAPSHOT
+          name: kstreams-demo
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /actuator/health/readiness
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /actuator/health/liveness
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: "0.8"
+              memory: "512Mi"
+
+

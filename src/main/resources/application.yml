@@ -1,0 +1,51 @@
+server:
+  port: 8080
+  shutdown: graceful
+spring:
+  application:
+    name: kstreams-demo
+  kafka:
+    properties:
+      #      schema.registry.url: http://127.0.0.1:8081
+      #      bootstrap.servers: 127.0.0.1:9094
+      schema.registry.url: http://192.168.0.240:8081
+      bootstrap.servers: 192.168.0.201:9094
+    streams:
+      bootstrap-servers: ${spring.kafka.properties.bootstrap.servers}
+      application-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      properties:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde
+        default.deserialization.exception.handler: org.apache.kafka.streams.errors.LogAndFailExceptionHandler
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+    consumer:
+      key-serializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      group-id: ${spring.application.name}
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} ${LOG_LEVEL_PATTERN:-%5p} %m%n"
+  level:
+    io.confluent.kafka.serializers: WARN
+    org.apache.kafka: WARN
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+topics:
+  commands:
+    name: commands
+    partitions-num: 1
+    replication-factor: 1
+  payloads:
+    name: payloads
+    partitions-num: 1
+    replication-factor: 1
+
